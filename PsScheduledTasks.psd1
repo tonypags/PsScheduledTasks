@@ -12,7 +12,7 @@
 RootModule = 'PsScheduledTasks.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0.1'
+ModuleVersion = '0.2.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -53,7 +53,6 @@ PowerShellVersion = '5.1'
 # Modules that must be imported into the global environment prior to importing this module
 RequiredModules = @(
     'ScheduledTasks'
-    'PsWinAdmin'
 )
 
 # Assemblies that must be loaded prior to importing this module

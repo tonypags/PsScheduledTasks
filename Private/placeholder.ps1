@@ -1,5 +1,0 @@
-function placeholder {
-    param (
-    )
-    'placeholder'
-}

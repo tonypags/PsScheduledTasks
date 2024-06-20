@@ -4,7 +4,7 @@ Foreach ($File in $Public) {
 }
 Export-ModuleMember -Function * -Alias * -Variable *
 
-# $Private = Get-ChildItem $PSScriptRoot\Private\*.ps1 -ea 0
-# Foreach ($File in $Private) {
-#     . $File.FullName
-# }
+$Private = Get-ChildItem $PSScriptRoot\Private\*.ps1 -ea 0
+Foreach ($File in $Private) {
+    . $File.FullName
+}

@@ -5,38 +5,32 @@ function Get-TaskAndInfo {
     .DESCRIPTION
     Runs Get-ScheduledTask and Get-ScheduledTaskInfo and combines the results
     .EXAMPLE
-    Get-TaskAndInfo -TaskPath '\TP\Internal\'
+    Get-TaskAndInfo # Returns all tasks
+    .EXAMPLE
+    Get-TaskAndInfo -TaskPath '\Level3\' # Returns tasks in this folder only (no recurse)
     #>
     [CmdletBinding()]
     param(
         # TaskPath must start and end with a backslash [\]
-        [Parameter(Mandatory)]
-        [ValidatePattern('^\\.+\\$')]
+        [Parameter()]
+        [AllowNull()]
+        [ValidatePattern('^\\$|^\\.+\\$')]
         [string]
         $TaskPath
     )
 
-    $ColumnOrder = @(
-        'TaskPath'
-        'TaskName'
-        'State'
-        'LastTaskResult'
-        'LastRunTime'
-        'NextRunTime'
-        'NumberOfMissedRuns'
-        'Principle'
-        'Actions'
-        'Triggers'
-        'Settings'
-        'Date'
-    )
+    # Get the tasks
+    $props = @{ErrorAction='Stop'}
+    if ($TaskPath) {$props.TaskPath = $TaskPath}
+    Try {$Tasks = Get-ScheduledTask @props} Catch {
+        Write-Error $_
+        return
+    }
 
-    # Get the tasks from a folder
-    $Tasks = Get-ScheduledTask -TaskPath $TaskPath -ea 0
     if ($Tasks) {
         $TasksInfo = $Tasks | Get-ScheduledTaskInfo
     } else {
-        Write-Error "No tasks found under $($TaskPath)!"
+        Write-Warning 'No tasks found!'
         return
     }
 
@@ -48,23 +42,30 @@ function Get-TaskAndInfo {
             $_.TaskPath -eq $task.TaskPath
         })
 
+        $Commands = @()
+        $task.Actions | ForEach-Object {$Commands += "$($_.Execute) $($_.Arguments)"}
+        $Cadence = $task.Triggers | ForEach-Object {Resolve-TriggerDescription -Trigger $_}
+
+        # write-debug 'here' -debug
         [PSCustomObject]@{
 
+            Hostname = $env:COMPUTERNAME
             TaskPath = $task.TaskPath
             TaskName = $task.TaskName
+            Description = $task.Description
             State = $task.State
             LastTaskResult = $thisInfo.LastTaskResult
             LastRunTime = $thisInfo.LastRunTime
             NextRunTime = $thisInfo.NextRunTime
             NumberOfMissedRuns = $thisInfo.NumberOfMissedRuns
             Principle = $task.Principal.UserId
+            Commands = $Commands -join ' ;  '
             Actions = $task.Actions
             Triggers = $task.Triggers
+            Cadence = $Cadence -join ' & '
             Settings = $task.Settings
             Date = $task.Date
-
-        } | Select-Object $ColumnOrder
-
+        }
     }
 
 }#END: function Get-TaskAndInfo {}
